@@ -14,15 +14,21 @@ export function registerProfileHandler(bot: Telegraf<Context>) {
       ? user.createdAt.toLocaleDateString("en-GB")
       : "—";
 
+    const name = `${user?.firstName ?? ""}${user?.lastName ? " " + user.lastName : ""}`;
+
     const text =
-      `👤 <b>My Profile</b>\n\n` +
-      `Name: ${user?.firstName ?? ""}${user?.lastName ? " " + user.lastName : ""}\n` +
-      `Username: ${user?.username ? "@" + user.username : "—"}\n` +
-      `Telegram ID: <code>${userId}</code>\n` +
-      `Registration Date: ${regDate}\n` +
-      `Verification: ${user?.verified ? "✅ Verified" : "❌ Not Verified"}\n` +
-      `Referrals: ${stats.verified} verified / ${stats.total} total\n` +
-      `Available Points: <b>${user?.points ?? 0}</b>`;
+      `👤 <b>My Profile</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `🧑 <b>Name:</b> ${name}\n` +
+      `🔖 <b>Username:</b> ${user?.username ? "@" + user.username : "—"}\n` +
+      `🆔 <b>Telegram ID:</b> <code>${userId}</code>\n` +
+      `📅 <b>Member Since:</b> ${regDate}\n` +
+      `✅ <b>Status:</b> ${user?.verified ? "Verified ✅" : "Not Verified ❌"}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📊 <b>Referral Stats</b>\n` +
+      `👥 Total Referrals: <b>${stats.total}</b>\n` +
+      `✅ Verified: <b>${stats.verified}</b>\n\n` +
+      `💰 <b>Available Points:</b> ${user?.points ?? 0}`;
 
     try {
       await ctx.editMessageText(text, {
