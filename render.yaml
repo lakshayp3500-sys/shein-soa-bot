@@ -1,5 +1,5 @@
 services:
-  - type: web
+  - type: worker
     name: shein-soa-bot
     runtime: node
     buildCommand: pnpm install && pnpm --filter @workspace/db run push && pnpm --filter @workspace/api-server run build
