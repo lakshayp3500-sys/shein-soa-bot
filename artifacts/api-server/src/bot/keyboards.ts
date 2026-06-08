@@ -3,42 +3,42 @@ import { Markup } from "telegraf";
 export const mainMenuKeyboard = () =>
   Markup.inlineKeyboard([
     [
-      Markup.button.callback("🎁 Redeem", "redeem"),
+      Markup.button.callback("🎁 Redeem Code", "redeem"),
       Markup.button.callback("🔗 Refer & Earn", "refer"),
     ],
     [
-      Markup.button.callback("💰 Wallet", "wallet"),
+      Markup.button.callback("💰 My Wallet", "wallet"),
       Markup.button.callback("👤 My Profile", "profile"),
     ],
     [
-      Markup.button.callback("🎟 Your Codes", "codes"),
+      Markup.button.callback("🎟 My Codes", "codes"),
       Markup.button.callback("🆘 Support", "support"),
     ],
   ]);
 
 export const backToMenuKeyboard = () =>
-  Markup.inlineKeyboard([[Markup.button.callback("🔙 Back", "main_menu")]]);
+  Markup.inlineKeyboard([[Markup.button.callback("🏠 Main Menu", "main_menu")]]);
 
 export const joinCheckKeyboard = () =>
   Markup.inlineKeyboard([
-    [Markup.button.callback("✅ I Joined", "check_join")],
+    [Markup.button.callback("✅ I've Joined — Check Now", "check_join")],
   ]);
 
 export const redeemKeyboard = () =>
   Markup.inlineKeyboard([
-    [Markup.button.callback("🎟 Redeem Code", "do_redeem")],
-    [Markup.button.callback("🔙 Back", "main_menu")],
+    [Markup.button.callback("🎟 Claim My Code", "do_redeem")],
+    [Markup.button.callback("🏠 Main Menu", "main_menu")],
   ]);
 
 export const referKeyboard = (botUsername: string, userId: number) =>
   Markup.inlineKeyboard([
     [
       Markup.button.url(
-        "📤 Share Referral Link",
-        `https://t.me/share/url?url=https://t.me/${botUsername}?start=${userId}&text=Join+SHEIN+SOA+Rewards+and+earn+free+codes!`
+        "📤 Share My Referral Link",
+        `https://t.me/share/url?url=https://t.me/${botUsername}?start=${userId}&text=🎁 Join SHEIN SOA Rewards and earn free coupon codes!`
       ),
     ],
-    [Markup.button.callback("🔙 Back", "main_menu")],
+    [Markup.button.callback("🏠 Main Menu", "main_menu")],
   ]);
 
 export const adminKeyboard = () =>
@@ -57,11 +57,14 @@ export const adminKeyboard = () =>
     ],
     [
       Markup.button.callback("👥 Users", "admin_users"),
-      Markup.button.callback("⚙ Settings", "admin_settings"),
+      Markup.button.callback("⚙️ Settings", "admin_settings"),
+    ],
+    [
+      Markup.button.callback("🎯 Set Redeem Points", "admin_set_redeem_points"),
     ],
   ]);
 
 export const backToAdminKeyboard = () =>
   Markup.inlineKeyboard([
-    [Markup.button.callback("🔙 Admin Panel", "admin_panel")],
+    [Markup.button.callback("🔙 Back to Admin Panel", "admin_panel")],
   ]);
