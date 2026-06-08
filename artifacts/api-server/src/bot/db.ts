@@ -284,3 +284,8 @@ export async function setSetting(key: string, value: string): Promise<void> {
       set: { value, updatedAt: new Date() },
     });
 }
+
+export async function getAllUserIds() {
+  const result = await db.select({ id: users.id }).from(users);
+  return result.map((r) => r.id);
+}
