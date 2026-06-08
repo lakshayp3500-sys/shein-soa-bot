@@ -9,7 +9,7 @@ import {
   getAllChannels,
   addChannel,
   removeChannelById,
-  getAllVerifiedUserIds,
+  getAllUserIds,
   getSetting,
   setSetting,
 } from "../db.js";
@@ -455,31 +455,34 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     adminStateMap.delete(ctx.from!.id);
 
     const { messageId, chatId } = state.data;
-    const userIds = await getAllVerifiedUserIds();
+    const userIds = await getAllUserIds();
+    const adminId = ctx.from!.id;
 
     try {
       await ctx.editMessageText(
-        `📢 Broadcasting to <b>${userIds.length}</b> users...`,
+        `📢 <b>Broadcast Started!</b>\n━━━━━━━━━━━━━━━━━━━━\n\n📤 Sending to <b>${userIds.length}</b> users...\n\n💡 Bot buttons will work normally while broadcast runs in background.`,
         { parse_mode: "HTML" }
       );
     } catch {}
 
-    let sent = 0;
-    let failed = 0;
-    for (const uid of userIds) {
-      try {
-        await bot.telegram.copyMessage(uid, chatId, messageId);
-        sent++;
-      } catch {
-        failed++;
+    setImmediate(async () => {
+      let sent = 0;
+      let failed = 0;
+      for (const uid of userIds) {
+        try {
+          await bot.telegram.copyMessage(uid, chatId, messageId);
+          sent++;
+        } catch {
+          failed++;
+        }
+        await new Promise((r) => setTimeout(r, 60));
       }
-      await new Promise((r) => setTimeout(r, 50));
-    }
-
-    await ctx.reply(
-      `✅ <b>Broadcast Complete!</b>\n\n✉️ Sent: <b>${sent}</b>\n❌ Failed: <b>${failed}</b>`,
-      { parse_mode: "HTML", ...adminKeyboard() }
-    );
+      await bot.telegram.sendMessage(
+        adminId,
+        `✅ <b>Broadcast Complete!</b>\n━━━━━━━━━━━━━━━━━━━━\n\n✉️ Sent: <b>${sent}</b>\n❌ Failed: <b>${failed}</b>`,
+        { parse_mode: "HTML" }
+      ).catch(() => {});
+    });
   });
 
   bot.action("admin_set_redeem_points", async (ctx) => {
