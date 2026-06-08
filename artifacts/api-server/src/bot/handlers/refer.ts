@@ -12,18 +12,22 @@ export function registerReferHandler(bot: Telegraf<Context>) {
   bot.action("refer", async (ctx) => {
     await ctx.answerCbQuery();
     const userId = ctx.from!.id;
-    const user = await getUser(userId);
     const stats = await getReferralStats(userId);
 
     const link = `https://t.me/${botUsername}?start=${userId}`;
 
     const text =
-      `🔗 <b>Refer & Earn</b>\n\n` +
-      `Your referral link:\n<code>${link}</code>\n\n` +
-      `Total Referrals: <b>${stats.total}</b>\n` +
-      `Verified Referrals: <b>${stats.verified}</b>\n` +
-      `Earned Points: <b>${stats.points}</b>\n\n` +
-      `Earn <b>+1 point</b> for every friend who joins and completes verification.`;
+      `🔗 <b>Refer & Earn</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `📤 <b>Your Referral Link:</b>\n` +
+      `<code>${link}</code>\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📊 <b>Your Stats</b>\n` +
+      `👥 Total Referrals: <b>${stats.total}</b>\n` +
+      `✅ Verified: <b>${stats.verified}</b>\n` +
+      `💰 Points Earned: <b>${stats.points}</b>\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `💡 Earn <b>+1 point</b> for every friend who joins & verifies!`;
 
     try {
       await ctx.editMessageText(text, {
