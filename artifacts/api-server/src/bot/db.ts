@@ -6,8 +6,9 @@ import {
   redemptions,
   referrals,
   joinRequests,
+  settings,
 } from "@workspace/db/schema";
-import { eq, and, count, sum, isNull } from "drizzle-orm";
+import { eq, and, count, sum } from "drizzle-orm";
 
 export async function getUser(telegramId: number) {
   const [user] = await db
@@ -263,4 +264,23 @@ export async function getAllVerifiedUserIds() {
     .from(users)
     .where(eq(users.verified, true));
   return result.map((r) => r.id);
+}
+
+export async function getSetting(key: string, defaultValue: string): Promise<string> {
+  const [row] = await db
+    .select()
+    .from(settings)
+    .where(eq(settings.key, key))
+    .limit(1);
+  return row?.value ?? defaultValue;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  await db
+    .insert(settings)
+    .values({ key, value })
+    .onConflictDoUpdate({
+      target: settings.key,
+      set: { value, updatedAt: new Date() },
+    });
 }
