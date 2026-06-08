@@ -7,23 +7,34 @@ import {
   claimCoupon,
   deductPoints,
   recordRedemption,
+  getSetting,
 } from "../db.js";
 import { redeemKeyboard, backToMenuKeyboard } from "../keyboards.js";
 
 const ADMIN_ID = Number(process.env.ADMIN_ID);
-const REQUIRED_POINTS = 10;
 const PRODUCT_NAME = "SHEIN (SOA)";
 
 export function registerRedeemHandler(bot: Telegraf<Context>) {
   bot.action("redeem", async (ctx) => {
     await ctx.answerCbQuery();
+    const userId = ctx.from!.id;
+    const user = await getUser(userId);
     const stock = await countAvailableCoupons();
+    const required = Number(await getSetting("redeem_points", "10"));
+    const pts = user?.points ?? 0;
+    const needed = Math.max(0, required - pts);
 
     const text =
-      `🎁 <b>Redeem</b>\n\n` +
-      `Product: <b>${PRODUCT_NAME}</b>\n` +
-      `Required Points: <b>${REQUIRED_POINTS}</b>\n` +
-      `Available Stock: <b>${stock}</b>`;
+      `🎁 <b>Redeem Coupon Code</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `🏷 <b>Product:</b> ${PRODUCT_NAME}\n` +
+      `⭐ <b>Required Points:</b> ${required}\n` +
+      `📦 <b>Stock Available:</b> ${stock} codes\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `💰 <b>Your Points:</b> ${pts}\n` +
+      (needed > 0
+        ? `⚠️ You need <b>${needed} more point(s)</b> to redeem.`
+        : `✅ You have enough points to redeem!`);
 
     try {
       await ctx.editMessageText(text, {
@@ -39,15 +50,16 @@ export function registerRedeemHandler(bot: Telegraf<Context>) {
     await ctx.answerCbQuery();
     const userId = ctx.from!.id;
     const user = await getUser(userId);
+    const required = Number(await getSetting("redeem_points", "10"));
 
     if (!user) {
       await ctx.answerCbQuery("❌ User not found.", { show_alert: true });
       return;
     }
 
-    if (user.points < REQUIRED_POINTS) {
+    if (user.points < required) {
       await ctx.answerCbQuery(
-        `❌ Insufficient points. You have ${user.points}/${REQUIRED_POINTS} points.`,
+        `❌ Not enough points! You have ${user.points}/${required} pts.`,
         { show_alert: true }
       );
       return;
@@ -55,7 +67,7 @@ export function registerRedeemHandler(bot: Telegraf<Context>) {
 
     const coupon = await getAvailableCoupon();
     if (!coupon) {
-      await ctx.answerCbQuery("❌ No codes available right now. Try again later.", {
+      await ctx.answerCbQuery("❌ No codes in stock right now. Try later!", {
         show_alert: true,
       });
       return;
@@ -63,13 +75,13 @@ export function registerRedeemHandler(bot: Telegraf<Context>) {
 
     const claimed = await claimCoupon(coupon.id, userId);
     if (!claimed) {
-      await ctx.answerCbQuery("❌ Failed to claim code. Please try again.", {
+      await ctx.answerCbQuery("❌ Failed to claim. Please try again.", {
         show_alert: true,
       });
       return;
     }
 
-    await deductPoints(userId, REQUIRED_POINTS);
+    await deductPoints(userId, required);
     await recordRedemption({
       userId,
       couponId: coupon.id,
@@ -78,10 +90,13 @@ export function registerRedeemHandler(bot: Telegraf<Context>) {
     });
 
     const text =
-      `🎉 <b>Code Redeemed Successfully!</b>\n\n` +
-      `Product: <b>${PRODUCT_NAME}</b>\n\n` +
-      `Your Code:\n<code>${coupon.code}</code>\n\n` +
-      `Save this code. You can also find it in <b>🎟 Your Codes</b>.`;
+      `🎉 <b>Code Redeemed Successfully!</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `🏷 <b>Product:</b> ${PRODUCT_NAME}\n\n` +
+      `🎟 <b>Your Code:</b>\n` +
+      `<code>${coupon.code}</code>\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `📌 Save this code — you can also find it in <b>🎟 My Codes</b>.`;
 
     try {
       await ctx.editMessageText(text, {
@@ -95,11 +110,11 @@ export function registerRedeemHandler(bot: Telegraf<Context>) {
     await bot.telegram.sendMessage(
       ADMIN_ID,
       `🎟 <b>Code Redeemed</b>\n\n` +
-        `Name: ${user.firstName}${user.lastName ? " " + user.lastName : ""}\n` +
-        `Username: ${user.username ? "@" + user.username : "—"}\n` +
-        `ID: <code>${userId}</code>\n\n` +
-        `Product: <b>${PRODUCT_NAME}</b>\n` +
-        `Code: <code>${coupon.code}</code>`,
+        `👤 ${user.firstName}${user.lastName ? " " + user.lastName : ""}\n` +
+        `🔖 ${user.username ? "@" + user.username : "—"}\n` +
+        `🆔 <code>${userId}</code>\n\n` +
+        `🏷 <b>Product:</b> ${PRODUCT_NAME}\n` +
+        `🔑 <b>Code:</b> <code>${coupon.code}</code>`,
       { parse_mode: "HTML" }
     ).catch(() => {});
   });
