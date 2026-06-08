@@ -21,15 +21,11 @@ async function checkMembership(
   channel: Channel
 ): Promise<boolean> {
   try {
-    const member = await bot.telegram.getChatMember(
-      channel.channelId,
-      userId
-    );
+    const member = await bot.telegram.getChatMember(channel.channelId, userId);
     if (["member", "administrator", "creator"].includes(member.status)) {
       return true;
     }
-  } catch {
-  }
+  } catch {}
 
   if (channel.isPrivate) {
     return hasJoinRequest(userId, channel.channelId);
@@ -54,26 +50,26 @@ export async function checkAllChannels(
   return { allJoined: missing.length === 0, missing };
 }
 
-export async function sendChannelJoinPrompt(
-  ctx: Context,
-  missing: Channel[]
-) {
+export async function sendChannelJoinPrompt(ctx: Context, missing: Channel[]) {
   const lines = missing
     .map((ch) => {
       if (ch.isPrivate && ch.inviteLink) {
-        return `• <a href="${ch.inviteLink}">${ch.channelName}</a> 🔒`;
+        return `🔒 <a href="${ch.inviteLink}">${ch.channelName}</a>`;
       }
       const link = ch.channelId.startsWith("@")
         ? `https://t.me/${ch.channelId.slice(1)}`
         : ch.inviteLink ?? "#";
-      return `• <a href="${link}">${ch.channelName}</a>`;
+      return `📢 <a href="${link}">${ch.channelName}</a>`;
     })
     .join("\n");
 
   await ctx.reply(
-    `⚠️ <b>You must join all required channels to continue.</b>\n\n` +
-      `Please join the following:\n\n${lines}\n\n` +
-      `After joining, press the button below.`,
+    `🔐 <b>Channel Verification Required</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `To access SHEIN SOA Rewards, please join our required channels:\n\n` +
+      `${lines}\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `After joining, press the button below ✅`,
     {
       parse_mode: "HTML",
       ...joinCheckKeyboard(),
@@ -82,9 +78,11 @@ export async function sendChannelJoinPrompt(
   );
 }
 
-export async function sendMainMenu(ctx: Context) {
+export async function sendMainMenu(ctx: Context, userId?: number) {
   await ctx.reply(
-    `🏠 <b>Main Menu</b>\n\nWelcome to SHEIN SOA Rewards! Choose an option:`,
+    `🏠 <b>SHEIN SOA Rewards</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `Welcome! Select an option below 👇`,
     { parse_mode: "HTML", ...mainMenuKeyboard() }
   );
 }
@@ -98,9 +96,7 @@ export function registerStartHandler(bot: Telegraf<Context>) {
     let referredBy: number | null = null;
     if (payload && /^\d+$/.test(payload)) {
       const referrerId = Number(payload);
-      if (referrerId !== userId) {
-        referredBy = referrerId;
-      }
+      if (referrerId !== userId) referredBy = referrerId;
     }
 
     const existingUser = await getUser(userId);
@@ -121,9 +117,9 @@ export function registerStartHandler(bot: Telegraf<Context>) {
           await createReferral(referredBy, userId);
           await bot.telegram.sendMessage(
             referredBy,
-            `👀 A user joined through your referral link.\nYou will receive <b>1 point</b> after their successful verification.`,
+            `👀 <b>New Referral!</b>\n\nSomeone joined via your link.\nYou'll earn <b>1 point</b> after their verification! 🎉`,
             { parse_mode: "HTML" }
-          );
+          ).catch(() => {});
         }
       }
 
@@ -131,18 +127,19 @@ export function registerStartHandler(bot: Telegraf<Context>) {
         ? `YES (Referrer ID: <code>${referredBy}</code>)`
         : "NO";
       let adminLog =
-        `🆕 <b>New User</b>\n\n` +
-        `Name: ${tgUser.first_name}${tgUser.last_name ? " " + tgUser.last_name : ""}\n` +
-        `Username: ${tgUser.username ? "@" + tgUser.username : "—"}\n` +
-        `ID: <code>${userId}</code>\n` +
-        `Referral: ${refText}`;
+        `🆕 <b>New User Joined</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `🧑 ${tgUser.first_name}${tgUser.last_name ? " " + tgUser.last_name : ""}\n` +
+        `🔖 ${tgUser.username ? "@" + tgUser.username : "—"}\n` +
+        `🆔 <code>${userId}</code>\n` +
+        `🔗 Referred: ${refText}`;
 
       if (referredBy) {
         const referrer = await getUser(referredBy);
         if (referrer) {
           adminLog +=
-            `\n\nReferrer: ${referrer.firstName}${referrer.lastName ? " " + referrer.lastName : ""}\n` +
-            `Referrer ID: <code>${referredBy}</code>`;
+            `\n\n👥 Referrer: ${referrer.firstName}${referrer.lastName ? " " + referrer.lastName : ""}\n` +
+            `🆔 <code>${referredBy}</code>`;
         }
       }
 
@@ -159,7 +156,15 @@ export function registerStartHandler(bot: Telegraf<Context>) {
     }
 
     await ctx.reply(
-      `👋 <b>Welcome to SHEIN SOA Rewards!</b>\n\nEarn points by referring friends and redeem them for exclusive SHEIN coupon codes.`,
+      `👋 <b>Welcome to SHEIN SOA Rewards!</b>\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `Earn points by referring friends and redeem them for exclusive <b>SHEIN coupon codes</b> — completely free!\n\n` +
+        `🎯 <b>How it works:</b>\n` +
+        `• Share your referral link\n` +
+        `• Friends join & verify\n` +
+        `• Earn <b>1 point</b> per verified referral\n` +
+        `• Redeem points for SHEIN codes 🎁\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━`,
       { parse_mode: "HTML" }
     );
 
@@ -171,7 +176,7 @@ export function registerStartHandler(bot: Telegraf<Context>) {
         await updateUser(userId, { verified: true });
         await onVerificationComplete(bot, userId);
       }
-      await sendMainMenu(ctx);
+      await sendMainMenu(ctx, userId);
     } else {
       await sendChannelJoinPrompt(ctx, missing);
     }
@@ -189,7 +194,9 @@ export function registerStartHandler(bot: Telegraf<Context>) {
       });
       try {
         await ctx.editMessageText(
-          `⚠️ <b>Still missing some channels.</b>\n\nPlease join:\n\n` +
+          `⚠️ <b>Still missing some channels!</b>\n` +
+            `━━━━━━━━━━━━━━━━━━━━\n\n` +
+            `Please join the following:\n\n` +
             missing
               .map((ch) => {
                 const link =
@@ -198,10 +205,11 @@ export function registerStartHandler(bot: Telegraf<Context>) {
                     : ch.channelId.startsWith("@")
                     ? `https://t.me/${ch.channelId.slice(1)}`
                     : ch.inviteLink ?? "#";
-                return `• <a href="${link}">${ch.channelName}</a>${ch.isPrivate ? " 🔒" : ""}`;
+                return `${ch.isPrivate ? "🔒" : "📢"} <a href="${link}">${ch.channelName}</a>`;
               })
               .join("\n") +
-            `\n\nAfter joining, press the button again.`,
+            `\n\n━━━━━━━━━━━━━━━━━━━━\n` +
+            `After joining, press the button again ✅`,
           {
             parse_mode: "HTML",
             ...joinCheckKeyboard(),
@@ -222,13 +230,13 @@ export function registerStartHandler(bot: Telegraf<Context>) {
 
     try {
       await ctx.editMessageText(
-        `✅ <b>Verification successful!</b>\n\nWelcome to SHEIN SOA Rewards!`,
+        `🎉 <b>Verification Successful!</b>\n\n` +
+          `You're all set! Welcome to SHEIN SOA Rewards 🌟`,
         { parse_mode: "HTML" }
       );
-    } catch {
-    }
+    } catch {}
 
-    await sendMainMenu(ctx);
+    await sendMainMenu(ctx, userId);
   });
 }
 
@@ -240,10 +248,11 @@ export async function onVerificationComplete(
 
   await bot.telegram.sendMessage(
     ADMIN_ID,
-    `✅ <b>User Verified</b>\n\n` +
-      `Name: ${user?.firstName ?? "Unknown"}${user?.lastName ? " " + user.lastName : ""}\n` +
-      `Username: ${user?.username ? "@" + user.username : "—"}\n` +
-      `ID: <code>${userId}</code>`,
+    `✅ <b>User Verified</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `🧑 ${user?.firstName ?? "Unknown"}${user?.lastName ? " " + user.lastName : ""}\n` +
+      `🔖 ${user?.username ? "@" + user.username : "—"}\n` +
+      `🆔 <code>${userId}</code>`,
     { parse_mode: "HTML" }
   ).catch(() => {});
 
@@ -252,7 +261,7 @@ export async function onVerificationComplete(
     await awardReferralPoints(userId);
     await bot.telegram.sendMessage(
       referral.referrerId,
-      `🎉 <b>Congratulations!</b> Your referral completed verification and you earned <b>1 point</b>!`,
+      `🎉 <b>+1 Point Earned!</b>\n\nYour referral just completed verification.\nKeep referring to earn more! 💰`,
       { parse_mode: "HTML" }
     ).catch(() => {});
   }
