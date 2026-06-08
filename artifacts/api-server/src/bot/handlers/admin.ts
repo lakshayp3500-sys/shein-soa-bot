@@ -10,6 +10,8 @@ import {
   addChannel,
   removeChannelById,
   getAllVerifiedUserIds,
+  getSetting,
+  setSetting,
 } from "../db.js";
 import { adminKeyboard, backToAdminKeyboard } from "../keyboards.js";
 
@@ -19,7 +21,8 @@ type AdminStep =
   | "add_coupon"
   | "add_channel"
   | "broadcast"
-  | "broadcast_confirm";
+  | "broadcast_confirm"
+  | "set_redeem_points";
 
 interface AdminState {
   step: AdminStep;
@@ -69,7 +72,7 @@ export async function handleAdminTextInput(
     const added = await addCoupons(unique);
     adminStateMap.delete(userId);
     await ctx.reply(
-      `✅ <b>Done!</b>\n\nSubmitted: ${unique.length} codes\nAdded to stock: ${added} (duplicates removed)`,
+      `✅ <b>Coupons Added!</b>\n\n📥 Submitted: <b>${unique.length}</b> codes\n✅ Added to stock: <b>${added}</b>\n🚫 Duplicates removed automatically.`,
       { parse_mode: "HTML", ...adminKeyboard() }
     );
     return true;
@@ -79,7 +82,7 @@ export async function handleAdminTextInput(
     const parts = text.split("|").map((p) => p.trim());
     if (parts.length < 2) {
       await ctx.reply(
-        `❌ Invalid format.\n\nUse:\n<code>@username|Channel Name</code>\nor\n<code>-100XXXXXXXXX|Channel Name|private|https://t.me/+xxxxx</code>`,
+        `❌ <b>Invalid format.</b>\n\nUse:\n<b>Public:</b>\n<code>@username|Channel Name</code>\n\n<b>Private:</b>\n<code>-100XXXXXXXXX|Channel Name|private|https://t.me/+xxxxx</code>`,
         { parse_mode: "HTML" }
       );
       return true;
@@ -95,7 +98,7 @@ export async function handleAdminTextInput(
     adminStateMap.delete(userId);
     if (ch) {
       await ctx.reply(
-        `✅ <b>Channel added!</b>\n\n${ch.channelName}\nID: <code>${ch.channelId}</code>\nType: ${ch.isPrivate ? "Private 🔒" : "Public"}`,
+        `✅ <b>Channel Added!</b>\n\n📢 ${ch.channelName}\n🆔 <code>${ch.channelId}</code>\n🔐 Type: ${ch.isPrivate ? "Private 🔒" : "Public"}`,
         { parse_mode: "HTML", ...adminKeyboard() }
       );
     } else {
@@ -107,13 +110,31 @@ export async function handleAdminTextInput(
     return true;
   }
 
+  if (state.step === "set_redeem_points") {
+    const num = parseInt(text.trim(), 10);
+    if (isNaN(num) || num < 1) {
+      await ctx.reply(
+        `❌ Invalid value. Please send a positive number (e.g. <code>10</code>).`,
+        { parse_mode: "HTML" }
+      );
+      return true;
+    }
+    await setSetting("redeem_points", String(num));
+    adminStateMap.delete(userId);
+    await ctx.reply(
+      `✅ <b>Redeem Points Updated!</b>\n\n🎯 Users now need <b>${num} points</b> to redeem a coupon.`,
+      { parse_mode: "HTML", ...adminKeyboard() }
+    );
+    return true;
+  }
+
   return false;
 }
 
 export function registerAdminHandlers(bot: Telegraf<Context>) {
   bot.command("admin", async (ctx) => {
     if (!isAdmin(ctx.from.id)) return;
-    await ctx.reply(`⚙️ <b>Admin Panel</b>`, {
+    await ctx.reply(`⚙️ <b>Admin Panel</b>\n━━━━━━━━━━━━━━━━━━━━`, {
       parse_mode: "HTML",
       ...adminKeyboard(),
     });
@@ -127,12 +148,12 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     await ctx.answerCbQuery();
     adminStateMap.delete(ctx.from!.id);
     try {
-      await ctx.editMessageText(`⚙️ <b>Admin Panel</b>`, {
+      await ctx.editMessageText(`⚙️ <b>Admin Panel</b>\n━━━━━━━━━━━━━━━━━━━━`, {
         parse_mode: "HTML",
         ...adminKeyboard(),
       });
     } catch {
-      await ctx.reply(`⚙️ <b>Admin Panel</b>`, {
+      await ctx.reply(`⚙️ <b>Admin Panel</b>\n━━━━━━━━━━━━━━━━━━━━`, {
         parse_mode: "HTML",
         ...adminKeyboard(),
       });
@@ -146,15 +167,19 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     }
     await ctx.answerCbQuery();
     const stats = await getStats();
+    const redeemPts = await getSetting("redeem_points", "10");
     const text =
-      `📊 <b>Statistics</b>\n\n` +
-      `Total Users: <b>${stats.totalUsers}</b>\n` +
-      `Verified Users: <b>${stats.verifiedUsers}</b>\n` +
-      `Unverified Users: <b>${stats.unverifiedUsers}</b>\n` +
-      `Total Referrals: <b>${stats.totalReferrals}</b>\n` +
-      `Total Redeems: <b>${stats.totalRedeems}</b>\n` +
-      `Available Codes: <b>${stats.availCodes}</b>\n` +
-      `Total Points Distributed: <b>${stats.totalPoints}</b>`;
+      `📊 <b>Statistics</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `👥 Total Users: <b>${stats.totalUsers}</b>\n` +
+      `✅ Verified: <b>${stats.verifiedUsers}</b>\n` +
+      `❌ Unverified: <b>${stats.unverifiedUsers}</b>\n\n` +
+      `🔗 Total Referrals: <b>${stats.totalReferrals}</b>\n` +
+      `🎟 Total Redeems: <b>${stats.totalRedeems}</b>\n` +
+      `📦 Available Codes: <b>${stats.availCodes}</b>\n` +
+      `💰 Points Distributed: <b>${stats.totalPoints}</b>\n\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🎯 Redeem Threshold: <b>${redeemPts} pts</b>`;
     try {
       await ctx.editMessageText(text, {
         parse_mode: "HTML",
@@ -172,7 +197,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     }
     await ctx.answerCbQuery();
     const userList = await getAllUsers(30);
-    let text = `👥 <b>Users</b> (last 30)\n\n`;
+    let text = `👥 <b>Users</b> (last 30)\n━━━━━━━━━━━━━━━━━━━━\n\n`;
     if (userList.length === 0) {
       text += "No users yet.";
     } else {
@@ -202,10 +227,11 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     await ctx.answerCbQuery();
     adminStateMap.set(ctx.from!.id, { step: "add_coupon" });
     const text =
-      `➕ <b>Add Coupons</b>\n\n` +
-      `Send coupon codes, one per line:\n\n` +
+      `➕ <b>Add Coupons</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `Send coupon codes, <b>one per line:</b>\n\n` +
       `<code>CODE1\nCODE2\nCODE3</code>\n\n` +
-      `Duplicates are removed automatically.`;
+      `Duplicates are removed automatically ✅`;
     try {
       await ctx.editMessageText(text, {
         parse_mode: "HTML",
@@ -244,8 +270,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
       Markup.button.callback(`🗑 ${c.code}`, `admin_del_coupon:${c.code}`),
     ]);
     buttons.push([Markup.button.callback("🔙 Admin Panel", "admin_panel")]);
-    const text =
-      `➖ <b>Remove Coupon</b>\n\nStock: <b>${unusedList.length}</b> unused codes\n\nTap a code to remove it:`;
+    const text = `➖ <b>Remove Coupon</b>\n\n📦 Stock: <b>${unusedList.length}</b> unused\n\nTap a code to remove it:`;
     try {
       await ctx.editMessageText(text, {
         parse_mode: "HTML",
@@ -283,7 +308,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     buttons.push([Markup.button.callback("🔙 Admin Panel", "admin_panel")]);
     try {
       await ctx.editMessageText(
-        `➖ <b>Remove Coupon</b>\n\nStock: <b>${unusedList.length}</b> unused\n\nTap a code to remove it:`,
+        `➖ <b>Remove Coupon</b>\n\n📦 Stock: <b>${unusedList.length}</b> unused\n\nTap a code to remove it:`,
         { parse_mode: "HTML", ...Markup.inlineKeyboard(buttons) }
       );
     } catch {}
@@ -297,11 +322,12 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     await ctx.answerCbQuery();
     adminStateMap.set(ctx.from!.id, { step: "add_channel" });
     const text =
-      `➕ <b>Add Channel</b>\n\n` +
+      `➕ <b>Add Channel</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `Send channel info in this format:\n\n` +
-      `Public channel:\n<code>@username|Channel Name</code>\n\n` +
-      `Private channel:\n<code>-100XXXXXXXXX|Channel Name|private|https://t.me/+xxxxx</code>\n\n` +
-      `⚠️ Add the bot as admin in the channel first.`;
+      `<b>Public channel:</b>\n<code>@username|Channel Name</code>\n\n` +
+      `<b>Private channel:</b>\n<code>-100XXXXXXXXX|Channel Name|private|https://t.me/+xxxxx</code>\n\n` +
+      `⚠️ Add the bot as admin in the channel first!`;
     try {
       await ctx.editMessageText(text, {
         parse_mode: "HTML",
@@ -391,7 +417,8 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     await ctx.answerCbQuery();
     adminStateMap.set(ctx.from!.id, { step: "broadcast" });
     const text =
-      `📢 <b>Broadcast</b>\n\n` +
+      `📢 <b>Broadcast Message</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `Send any message (text, photo, video, etc.) and it will be forwarded to all verified users.`;
     try {
       await ctx.editMessageText(text, {
@@ -450,9 +477,36 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     }
 
     await ctx.reply(
-      `✅ <b>Broadcast Complete</b>\n\nSent: <b>${sent}</b>\nFailed: <b>${failed}</b>`,
+      `✅ <b>Broadcast Complete!</b>\n\n✉️ Sent: <b>${sent}</b>\n❌ Failed: <b>${failed}</b>`,
       { parse_mode: "HTML", ...adminKeyboard() }
     );
+  });
+
+  bot.action("admin_set_redeem_points", async (ctx) => {
+    if (!isAdmin(ctx.from!.id)) {
+      await ctx.answerCbQuery("❌ Not authorized", { show_alert: true });
+      return;
+    }
+    await ctx.answerCbQuery();
+    const current = await getSetting("redeem_points", "10");
+    adminStateMap.set(ctx.from!.id, { step: "set_redeem_points" });
+    const text =
+      `🎯 <b>Set Redeem Points Threshold</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `Current value: <b>${current} points</b>\n\n` +
+      `Send the new number of points required to redeem a coupon:\n` +
+      `(e.g. send <code>12</code> to require 12 points)`;
+    try {
+      await ctx.editMessageText(text, {
+        parse_mode: "HTML",
+        ...Markup.inlineKeyboard([[Markup.button.callback("❌ Cancel", "admin_panel")]]),
+      });
+    } catch {
+      await ctx.reply(text, {
+        parse_mode: "HTML",
+        ...Markup.inlineKeyboard([[Markup.button.callback("❌ Cancel", "admin_panel")]]),
+      });
+    }
   });
 
   bot.action("admin_settings", async (ctx) => {
@@ -462,6 +516,7 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
     }
     await ctx.answerCbQuery();
     const channelList = await getAllChannels();
+    const redeemPts = await getSetting("redeem_points", "10");
     const chText =
       channelList.length === 0
         ? "No channels configured."
@@ -472,8 +527,10 @@ export function registerAdminHandlers(bot: Telegraf<Context>) {
             )
             .join("\n");
     const text =
-      `⚙️ <b>Settings</b>\n\n` +
-      `Admin ID: <code>${ADMIN_ID}</code>\n\n` +
+      `⚙️ <b>Settings</b>\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `👤 Admin ID: <code>${ADMIN_ID}</code>\n` +
+      `🎯 Redeem Points: <b>${redeemPts}</b>\n\n` +
       `<b>Force Join Channels (${channelList.length}):</b>\n${chText}`;
     try {
       await ctx.editMessageText(text, {
