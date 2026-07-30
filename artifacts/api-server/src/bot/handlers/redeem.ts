@@ -20,7 +20,7 @@ export function registerRedeemHandler(bot: Telegraf<Context>) {
     const userId = ctx.from!.id;
     const user = await getUser(userId);
     const stock = await countAvailableCoupons();
-    const required = Number(await getSetting("redeem_points", "10"));
+    const required = Number(await getSetting("redeem_points", "5"));
     const pts = user?.points ?? 0;
     const needed = Math.max(0, required - pts);
 
@@ -50,7 +50,7 @@ export function registerRedeemHandler(bot: Telegraf<Context>) {
     await ctx.answerCbQuery();
     const userId = ctx.from!.id;
     const user = await getUser(userId);
-    const required = Number(await getSetting("redeem_points", "10"));
+    const required = Number(await getSetting("redeem_points", "5"));
 
     if (!user) {
       await ctx.answerCbQuery("❌ User not found.", { show_alert: true });
