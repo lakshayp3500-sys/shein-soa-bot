@@ -126,7 +126,7 @@ export async function claimCoupon(couponId: number, userId: number) {
   return coupon ?? null;
 }
 
-export async function addCoupons(codes: string[], productName = "SHEIN (SOA)") {
+export async function addCoupons(codes: string[], productName = "Blinkit") {
   const values = codes.map((code) => ({ code: code.trim(), productName }));
   const inserted = await db
     .insert(coupons)

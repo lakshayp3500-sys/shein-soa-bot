@@ -35,7 +35,7 @@ export const referKeyboard = (botUsername: string, userId: number) =>
     [
       Markup.button.url(
         "📤 Share My Referral Link",
-        `https://t.me/share/url?url=https://t.me/${botUsername}?start=${userId}&text=🎁 Join SHEIN SOA Rewards and earn free coupon codes!`
+        `https://t.me/share/url?url=https://t.me/${botUsername}?start=${userId}&text=🎁 Join Blinkit Rewards and earn free coupon codes!`
       ),
     ],
     [Markup.button.callback("🏠 Main Menu", "main_menu")],

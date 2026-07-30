@@ -1,1 +1,1 @@
-# SHEIN SOA Rewards Bot
+# Blinkit Rewards Bot

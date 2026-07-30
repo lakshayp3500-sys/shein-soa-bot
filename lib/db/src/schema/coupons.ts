@@ -3,7 +3,7 @@ import { pgTable, serial, text, boolean, bigint, timestamp } from "drizzle-orm/p
 export const coupons = pgTable("coupons", {
   id: serial("id").primaryKey(),
   code: text("code").notNull().unique(),
-  productName: text("product_name").notNull().default("SHEIN (SOA)"),
+  productName: text("product_name").notNull().default("Blinkit"),
   used: boolean("used").notNull().default(false),
   usedBy: bigint("used_by", { mode: "number" }),
   usedAt: timestamp("used_at"),

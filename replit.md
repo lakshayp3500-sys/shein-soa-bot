@@ -1,6 +1,6 @@
-# SHEIN SOA Rewards Bot
+# Blinkit Rewards Bot
 
-A Telegram rewards bot that lets users earn points through referrals and redeem them for SHEIN coupon codes.
+A Telegram rewards bot that lets users earn points through referrals and redeem them for Blinkit coupon codes.
 
 ## Run & Operate
 
@@ -41,7 +41,7 @@ A Telegram rewards bot that lets users earn points through referrals and redeem 
 
 - Users start the bot, join required channels, and get verified.
 - Referral system: share a unique link, earn 1 point per verified referral.
-- Redeem 10 points for a SHEIN coupon code.
+- Redeem 10 points for a Blinkit coupon code.
 - Admin panel: add/remove channels and coupons, broadcast messages, view stats and users.
 
 ## User preferences

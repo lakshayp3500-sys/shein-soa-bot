@@ -66,7 +66,7 @@ export async function sendChannelJoinPrompt(ctx: Context, missing: Channel[]) {
   await ctx.reply(
     `🔐 <b>Channel Verification Required</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `To access SHEIN SOA Rewards, please join our required channels:\n\n` +
+      `To access Blinkit Rewards, please join our required channels:\n\n` +
       `${lines}\n\n` +
       `━━━━━━━━━━━━━━━━━━━━\n` +
       `After joining, press the button below ✅`,
@@ -80,7 +80,7 @@ export async function sendChannelJoinPrompt(ctx: Context, missing: Channel[]) {
 
 export async function sendMainMenu(ctx: Context, userId?: number) {
   await ctx.reply(
-    `🏠 <b>SHEIN SOA Rewards</b>\n` +
+    `🏠 <b>Blinkit Rewards</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `Welcome! Select an option below 👇`,
     { parse_mode: "HTML", ...mainMenuKeyboard() }
@@ -156,14 +156,14 @@ export function registerStartHandler(bot: Telegraf<Context>) {
     }
 
     await ctx.reply(
-      `👋 <b>Welcome to SHEIN SOA Rewards!</b>\n` +
+      `👋 <b>Welcome to Blinkit Rewards!</b>\n` +
         `━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `Earn points by referring friends and redeem them for exclusive <b>SHEIN coupon codes</b> — completely free!\n\n` +
+        `Earn points by referring friends and redeem them for exclusive <b>Blinkit coupon codes</b> — completely free!\n\n` +
         `🎯 <b>How it works:</b>\n` +
         `• Share your referral link\n` +
         `• Friends join & verify\n` +
         `• Earn <b>1 point</b> per verified referral\n` +
-        `• Redeem points for SHEIN codes 🎁\n\n` +
+        `• Redeem points for Blinkit codes 🎁\n\n` +
         `━━━━━━━━━━━━━━━━━━━━`,
       { parse_mode: "HTML" }
     );
@@ -231,7 +231,7 @@ export function registerStartHandler(bot: Telegraf<Context>) {
     try {
       await ctx.editMessageText(
         `🎉 <b>Verification Successful!</b>\n\n` +
-          `You're all set! Welcome to SHEIN SOA Rewards 🌟`,
+          `You're all set! Welcome to Blinkit Rewards 🌟`,
         { parse_mode: "HTML" }
       );
     } catch {}

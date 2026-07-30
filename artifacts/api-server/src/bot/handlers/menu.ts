@@ -11,7 +11,7 @@ export function registerMenuHandler(bot: Telegraf<Context>) {
     const name = user?.firstName ?? "there";
 
     const text =
-      `🏠 <b>SHEIN SOA Rewards</b>\n` +
+      `🏠 <b>Blinkit Rewards</b>\n` +
       `━━━━━━━━━━━━━━━━━━━━\n\n` +
       `👋 Welcome back, <b>${name}</b>!\n\n` +
       `💰 Balance: <b>${user?.points ?? 0} pts</b>\n\n` +

@@ -12,7 +12,7 @@ import {
 import { redeemKeyboard, backToMenuKeyboard } from "../keyboards.js";
 
 const ADMIN_ID = Number(process.env.ADMIN_ID);
-const PRODUCT_NAME = "SHEIN (SOA)";
+const PRODUCT_NAME = "Blinkit";
 
 export function registerRedeemHandler(bot: Telegraf<Context>) {
   bot.action("redeem", async (ctx) => {
